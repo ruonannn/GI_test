@@ -85,6 +85,14 @@ namespace RayTracer
         public void Render(Image outputImage, double time = 0)
         {
             // Begin writing your code here...
+            // Stage 1.1 set background color to white
+            for(int y = 0; y < outputImage.Height; y++)
+            {
+                for(int x = 0; x < outputImage.Width; x++)
+                {
+                    outputImage.SetPixel(x, y, new Color(1, 1, 1));
+                }
+            }
         }
     }
 }
