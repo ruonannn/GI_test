@@ -1,3 +1,12 @@
+# RayTracer CI/CD Pipeline
+# 
+# This workflow automates testing and validation for the ray tracer project.
+# Key references:
+# - GitHub Actions: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+# - .NET Testing: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# - ImageMagick: https://imagemagick.org/script/compare.php
+
+
 name: RayTracer CI/CD Pipeline
 
 on:
@@ -60,26 +69,123 @@ jobs:
       - name: create output directory
         run: mkdir -p ${{ env.OUTPUT_DIR }}
 
-      - name: Stage 1 - basic geometry rendering
+      - name: Install ImageMagick for image comparison
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick bc
+
+      - name: Stage 1 - basic geometry rendering and validation
         run: |
           echo "test basic geometry rendering..."
           dotnet run -- -f tests/sample_scene_1.txt -o ${{ env.OUTPUT_DIR }}/stage1_scene1.png
-          if [ -f "${{ env.OUTPUT_DIR }}/stage1_scene1.png" ]; then
-            echo "Stage 1 - scene 1 rendering successfully"
-          else
-            echo "Stage 1 - scene 1 rendering failed"
+          
+          if [ ! -f "${{ env.OUTPUT_DIR }}/stage1_scene1.png" ]; then
+            echo "Stage 1 - scene 1 rendering failed - no output file"
             exit 1
           fi
+          
+          # Check image properties
+          WIDTH=$(identify -format "%w" "${{ env.OUTPUT_DIR }}/stage1_scene1.png")
+          HEIGHT=$(identify -format "%h" "${{ env.OUTPUT_DIR }}/stage1_scene1.png")
+          COLORS=$(identify -format "%k" "${{ env.OUTPUT_DIR }}/stage1_scene1.png")
+          echo "Generated image size: ${WIDTH}x${HEIGHT}"
+          echo "Unique colors in image: $COLORS"
+          
+          if [ "$WIDTH" != "400" ] || [ "$HEIGHT" != "400" ]; then
+            echo "Stage 1 - incorrect image dimensions (expected 400x400, got ${WIDTH}x${HEIGHT})"
+            exit 1
+          fi
+          
+          # Check for blank or mostly monochrome images
+          if [ "$COLORS" -lt "10" ]; then
+            echo "Warning: Image appears to be blank or nearly monochrome (only $COLORS unique colors)"
+          fi
+          
+          # Compare with reference images if they exist
+          BEST_MATCH_DIFF=100
+          BEST_MATCH_REF=""
+          
+          for ref_img in images/sample_scene_1_s*.png; do
+            if [ -f "$ref_img" ]; then
+              echo "Comparing with reference: $ref_img"
+              # Calculate perceptual difference (0-100, lower is better)
+              DIFF=$(compare -metric PHASH "${{ env.OUTPUT_DIR }}/stage1_scene1.png" "$ref_img" /dev/null 2>&1 || echo "100")
+              echo "Perceptual difference: $DIFF"
+              
+              if (( $(echo "$DIFF < $BEST_MATCH_DIFF" | bc -l) )); then
+                BEST_MATCH_DIFF=$DIFF
+                BEST_MATCH_REF=$ref_img
+              fi
+            fi
+          done
+          
+          if [ ! -z "$BEST_MATCH_REF" ]; then
+            echo "Best match: $BEST_MATCH_REF with difference: $BEST_MATCH_DIFF"
+            # Allow some tolerance for different implementations
+            if (( $(echo "$BEST_MATCH_DIFF < 15" | bc -l) )); then
+              echo "Stage 1 - scene 1 rendering matches reference (diff: $BEST_MATCH_DIFF)"
+            else
+              echo "Stage 1 - scene 1 rendering differs significantly from reference (diff: $BEST_MATCH_DIFF)"
+              echo "This might indicate implementation differences or bugs"
+            fi
+          else
+            echo "No reference images found for comparison"
+          fi
 
-      - name: Stage 2 - advanced material and lighting
+      - name: Stage 2 - advanced material and lighting validation
         run: |
           echo "test advanced material and lighting..."
           dotnet run -- -f tests/sample_scene_2.txt -o ${{ env.OUTPUT_DIR }}/stage2_scene2.png
-          if [ -f "${{ env.OUTPUT_DIR }}/stage2_scene2.png" ]; then
-            echo "Stage 2 - scene 2 rendering successfully"
-          else
-            echo "Stage 2 - scene 2 rendering failed"
+          
+          if [ ! -f "${{ env.OUTPUT_DIR }}/stage2_scene2.png" ]; then
+            echo "Stage 2 - scene 2 rendering failed - no output file"
             exit 1
+          fi
+          
+          # Check image properties
+          WIDTH=$(identify -format "%w" "${{ env.OUTPUT_DIR }}/stage2_scene2.png")
+          HEIGHT=$(identify -format "%h" "${{ env.OUTPUT_DIR }}/stage2_scene2.png")
+          COLORS=$(identify -format "%k" "${{ env.OUTPUT_DIR }}/stage2_scene2.png")
+          echo "Generated image size: ${WIDTH}x${HEIGHT}"
+          echo "Unique colors in image: $COLORS"
+          
+          if [ "$WIDTH" != "400" ] || [ "$HEIGHT" != "400" ]; then
+            echo "Stage 2 - incorrect image dimensions (expected 400x400, got ${WIDTH}x${HEIGHT})"
+            exit 1
+          fi
+          
+          # Check for blank or mostly monochrome images
+          if [ "$COLORS" -lt "10" ]; then
+            echo "Warning: Image appears to be blank or nearly monochrome (only $COLORS unique colors)"
+          fi
+          
+          # Compare with reference images
+          BEST_MATCH_DIFF=100
+          BEST_MATCH_REF=""
+          
+          for ref_img in images/sample_scene_2_s*.png; do
+            if [ -f "$ref_img" ]; then
+              echo "Comparing with reference: $ref_img"
+              DIFF=$(compare -metric PHASH "${{ env.OUTPUT_DIR }}/stage2_scene2.png" "$ref_img" /dev/null 2>&1 || echo "100")
+              echo "Perceptual difference: $DIFF"
+              
+              if (( $(echo "$DIFF < $BEST_MATCH_DIFF" | bc -l) )); then
+                BEST_MATCH_DIFF=$DIFF
+                BEST_MATCH_REF=$ref_img
+              fi
+            fi
+          done
+          
+          if [ ! -z "$BEST_MATCH_REF" ]; then
+            echo "Best match: $BEST_MATCH_REF with difference: $BEST_MATCH_DIFF"
+            if (( $(echo "$BEST_MATCH_DIFF < 15" | bc -l) )); then
+              echo "Stage 2 - scene 2 rendering matches reference (diff: $BEST_MATCH_DIFF)"
+            else
+              echo "Stage 2 - scene 2 rendering differs significantly from reference (diff: $BEST_MATCH_DIFF)"
+              echo "This might indicate implementation differences or bugs"
+            fi
+          else
+            echo "No reference images found for comparison"
           fi
 
       - name: upload core rendering results
@@ -227,18 +333,59 @@ jobs:
       - name: create output directory
         run: mkdir -p ${{ env.OUTPUT_DIR }}
 
-      - name: final scene rendering test
+      - name: Install ImageMagick for image comparison
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: final scene rendering test and validation
         run: |
           echo "test final scene..."
           if [ -s "tests/final_scene.txt" ]; then
             if dotnet run -- -f tests/final_scene.txt -o ${{ env.OUTPUT_DIR }}/final_scene.png; then
               echo "final scene rendering successfully"
+              
+              # Validate the generated image
+              if [ -f "${{ env.OUTPUT_DIR }}/final_scene.png" ]; then
+                WIDTH=$(identify -format "%w" "${{ env.OUTPUT_DIR }}/final_scene.png")
+                HEIGHT=$(identify -format "%h" "${{ env.OUTPUT_DIR }}/final_scene.png")
+                echo "Generated final scene size: ${WIDTH}x${HEIGHT}"
+                
+                # Compare with reference final scene if exists
+                if [ -f "images/final_scene.png" ]; then
+                  DIFF=$(compare -metric PHASH "${{ env.OUTPUT_DIR }}/final_scene.png" "images/final_scene.png" /dev/null 2>&1 || echo "100")
+                  echo "Final scene perceptual difference: $DIFF"
+                  
+                  if (( $(echo "$DIFF < 20" | bc -l) )); then
+                    echo "Final scene matches reference closely (diff: $DIFF)"
+                  else
+                    echo "Final scene differs from reference (diff: $DIFF)"
+                    echo "This is expected if it haven't implemented all features yet"
+                  fi
+                else
+                  echo "No reference final scene found for comparison"
+                fi
+              else
+                echo "Final scene file was not generated"
+                exit 1
+              fi
             else
               echo "final scene rendering failed"
               exit 1
             fi
           else
-            echo "final scene file is empty or not exist"
+            echo "final scene file is empty or not exist - creating placeholder test"
+            # Create a simple test scene if final_scene.txt is empty
+            echo "Camera (0, 0, 0) (0, 0, 1) 0 1" > temp_final_scene.txt
+            echo "Material \"TestMat\" (0.1, 0.1, 0.1) (0.5, 0.5, 0.5) (0, 0, 0) 0 0 0 1" >> temp_final_scene.txt
+            echo "Sphere \"TestSphere\" (0, 0, 2) 0.5 \"TestMat\"" >> temp_final_scene.txt
+            
+            if dotnet run -- -f temp_final_scene.txt -o ${{ env.OUTPUT_DIR }}/test_final_scene.png; then
+              echo "Basic rendering test passed"
+            else
+              echo "Basic rendering test failed"
+              exit 1
+            fi
           fi
 
       - name: upload final scene result
@@ -249,11 +396,115 @@ jobs:
           path: ${{ env.OUTPUT_DIR }}/final_scene.png
           retention-days: 90
 
+  # Visual comparison report
+  visual-comparison:
+    name: visual comparison report
+    runs-on: ubuntu-latest
+    needs: [core-rendering-tests]
+    if: always()
+    
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: download core rendering results
+        uses: actions/download-artifact@v4
+        with:
+          name: core-rendering-results
+          path: ${{ env.OUTPUT_DIR }}
+        continue-on-error: true
+
+      - name: Install ImageMagick for comparison
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: generate visual comparison report
+        run: |
+          mkdir -p comparison_output
+          
+          echo "# Visual Comparison Report" > comparison_report.md
+          echo "" >> comparison_report.md
+          echo "This report shows the differences between rendered images and the reference images." >> comparison_report.md
+          echo "" >> comparison_report.md
+          
+          # Compare Stage 1 if rendered
+          if [ -f "${{ env.OUTPUT_DIR }}/stage1_scene1.png" ]; then
+            echo "## Stage 1 - Basic Geometry Rendering" >> comparison_report.md
+            echo "" >> comparison_report.md
+            
+            for ref_img in images/sample_scene_1_s*.png; do
+              if [ -f "$ref_img" ]; then
+                ref_name=$(basename "$ref_img" .png)
+                echo "### Comparison with $ref_name" >> comparison_report.md
+                
+                # Generate difference image
+                compare "${{ env.OUTPUT_DIR }}/stage1_scene1.png" "$ref_img" \
+                  -compose difference \
+                  "comparison_output/diff_stage1_vs_${ref_name}.png" 2>/dev/null || true
+                
+                # Calculate metrics
+                PSNR=$(compare -metric PSNR "${{ env.OUTPUT_DIR }}/stage1_scene1.png" "$ref_img" /dev/null 2>&1 | grep -o '[0-9.]*' || echo "N/A")
+                MSE=$(compare -metric MSE "${{ env.OUTPUT_DIR }}/stage1_scene1.png" "$ref_img" /dev/null 2>&1 | grep -o '[0-9.]*' | head -1 || echo "N/A")
+                
+                echo "- **PSNR**: $PSNR dB (higher is better)" >> comparison_report.md
+                echo "- **MSE**: $MSE (lower is better)" >> comparison_report.md
+                echo "- **Difference image**: diff_stage1_vs_${ref_name}.png" >> comparison_report.md
+                echo "" >> comparison_report.md
+              fi
+            done
+          fi
+          
+          # Compare Stage 2 if rendered  
+          if [ -f "${{ env.OUTPUT_DIR }}/stage2_scene2.png" ]; then
+            echo "## Stage 2 - Advanced Material and Lighting" >> comparison_report.md
+            echo "" >> comparison_report.md
+            
+            for ref_img in images/sample_scene_2_s*.png; do
+              if [ -f "$ref_img" ]; then
+                ref_name=$(basename "$ref_img" .png)
+                echo "### Comparison with $ref_name" >> comparison_report.md
+                
+                # Generate difference image
+                compare "${{ env.OUTPUT_DIR }}/stage2_scene2.png" "$ref_img" \
+                  -compose difference \
+                  "comparison_output/diff_stage2_vs_${ref_name}.png" 2>/dev/null || true
+                
+                # Calculate metrics
+                PSNR=$(compare -metric PSNR "${{ env.OUTPUT_DIR }}/stage2_scene2.png" "$ref_img" /dev/null 2>&1 | grep -o '[0-9.]*' || echo "N/A")
+                MSE=$(compare -metric MSE "${{ env.OUTPUT_DIR }}/stage2_scene2.png" "$ref_img" /dev/null 2>&1 | grep -o '[0-9.]*' | head -1 || echo "N/A")
+                
+                echo "- **PSNR**: $PSNR dB (higher is better)" >> comparison_report.md
+                echo "- **MSE**: $MSE (lower is better)" >> comparison_report.md
+                echo "- **Difference image**: diff_stage2_vs_${ref_name}.png" >> comparison_report.md
+                echo "" >> comparison_report.md
+              fi
+            done
+          fi
+          
+          echo "## How to Interpret the Results" >> comparison_report.md
+          echo "" >> comparison_report.md
+          echo "- **PSNR (Peak Signal-to-Noise Ratio)**: Higher values (>30 dB) indicate closer match" >> comparison_report.md
+          echo "- **MSE (Mean Squared Error)**: Lower values indicate closer match" >> comparison_report.md
+          echo "- **Difference images**: White/bright areas show where images differ" >> comparison_report.md
+          echo "- Small differences are normal due to implementation variations" >> comparison_report.md
+          echo "- Large differences may indicate bugs or missing features" >> comparison_report.md
+
+      - name: upload visual comparison report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-comparison-report
+          path: |
+            comparison_report.md
+            comparison_output/
+          retention-days: 30
+
   # test summary
   test-summary:
     name: test result summary
     runs-on: ubuntu-latest
-    needs: [core-rendering-tests, advanced-features-tests, animation-tests, final-scene-test]
+    needs: [core-rendering-tests, advanced-features-tests, animation-tests, final-scene-test, visual-comparison]
     if: always()
 
     steps:
@@ -294,5 +545,24 @@ jobs:
             echo "**final scene**: need to be improved" >> $GITHUB_STEP_SUMMARY
           fi
           
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo " rendering results have been uploaded to Artifacts, can be downloaded from Actions page." >> $GITHUB_STEP_SUMMARY
+                     # visual comparison result
+           if [ "${{ needs.visual-comparison.result }}" == "success" ]; then
+             echo "**visual comparison**: completed" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "**visual comparison**: failed or skipped" >> $GITHUB_STEP_SUMMARY
+           fi
+           
+           echo "" >> $GITHUB_STEP_SUMMARY
+           echo "**Available Downloads from Artifacts:**" >> $GITHUB_STEP_SUMMARY
+           echo "- **core-rendering-results**: Rendered Stage 1 & 2 images" >> $GITHUB_STEP_SUMMARY
+           echo "- **visual-comparison-report**: Detailed comparison with reference images + difference images" >> $GITHUB_STEP_SUMMARY
+           echo "- **advanced-features-results**: Advanced features test results (if implemented)" >> $GITHUB_STEP_SUMMARY
+           echo "- **animation-test-results**: Animation test results (if implemented)" >> $GITHUB_STEP_SUMMARY
+           echo "- **final-scene-result**: Final scene rendering (if available)" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+           echo "**How to use these results:**" >> $GITHUB_STEP_SUMMARY
+           echo "1. Download the artifacts from the Actions page" >> $GITHUB_STEP_SUMMARY
+           echo "2. Compare the rendered images with the reference images in /images folder" >> $GITHUB_STEP_SUMMARY
+           echo "3. Check the visual-comparison-report for detailed analysis" >> $GITHUB_STEP_SUMMARY
+           echo "4. Use the difference images to identify specific problem areas" >> $GITHUB_STEP_SUMMARY
+           echo "5. If images are blank, check that Scene.Render() method is properly implemented" >> $GITHUB_STEP_SUMMARY

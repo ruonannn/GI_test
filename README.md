@@ -102,3 +102,8 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 
 *You must list any references you used - add them here!*
 
+GitHub Actions: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+
+.NET Testing: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+ImageMagick: https://imagemagick.org/script/compare.php
