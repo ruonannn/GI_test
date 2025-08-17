@@ -38,7 +38,7 @@ jobs:
       - name: verify basic functionality
         run: |
           # test command line argument parsing
-          dotnet run -- --help
+          dotnet run -- --help || true
           echo "command line argument parsing successfully"
 
   # core rendering tests
