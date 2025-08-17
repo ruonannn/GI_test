@@ -1,0 +1,42 @@
+name: RayTracer CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Run Stage 1 & 2 sample scenes
+        run: |
+          mkdir -p out
+          dotnet run -- -f tests/sample_scene_1.txt -o out/scene1.png
+          dotnet run -- -f tests/sample_scene_2.txt -o out/scene2.png
+
+      - name: Run Stage 3 sample scenes (if implemented)
+        run: |
+          mkdir -p out
+          dotnet run -- -f tests/sample_scene_obj.txt -o out/obj.png
+          dotnet run -- -f tests/sample_scene_tex_1.txt -o out/tex1.png
+          dotnet run -- -f tests/sample_scene_tex_2.txt -o out/tex2.png
+          dotnet run -- -f tests/sample_scene_tex_3.txt -o out/tex3.png
+          dotnet run -- -f tests/sample_scene_anim_simple.txt -o out/anim_simple.png
+          dotnet run -- -f tests/sample_scene_anim_cam.txt -o out/anim_cam.png
+
+      - name: Upload rendered images
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-images
+          path: out/
