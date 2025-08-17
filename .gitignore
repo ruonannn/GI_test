@@ -398,3 +398,7 @@ FodyWeavers.xsd
 # Another exception... allow .obj files in /tests/models
 # Annoyingly .obj is a shared file extension, not just for 3D models
 !tests/**/*.obj
+
+# ignore COMP30019_Project_1_Specification_2025.md
+COMP30019_Project_1_Specification_2025.md
+
