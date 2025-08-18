@@ -42,9 +42,8 @@ namespace RayTracer
         /// </summary>
         /// <returns>Length of the vector squared</returns>
         public double LengthSq()
-        {
-            // Write your code here...
-            return 0;
+        {   
+            return this.x * this.x + this.y * this.y + this.z * this.z;
         }
 
         /// <summary>
@@ -52,9 +51,13 @@ namespace RayTracer
         /// </summary>
         /// <returns>Length of the vector</returns>
         public double Length()
-        {
-            // Write your code here...
-            return 0;
+        {   
+            var lsq = LengthSq();
+            if (lsq < 0) {
+                throw new Exception("Length squared is negative");
+            } else {
+                return Math.Sqrt(lsq);
+            }
         }
 
         /// <summary>
@@ -63,8 +66,12 @@ namespace RayTracer
         /// <returns>Normalized vector</returns>
         public Vector3 Normalized()
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            var l = this.Length();
+            if (l == 0) {
+                throw new DivideByZeroException();
+            } else {
+                return new Vector3(this.x / l, this.y / l, this.z / l);
+            }
         }
 
         /// <summary>
@@ -74,8 +81,7 @@ namespace RayTracer
         /// <returns>Dot product result</returns>
         public double Dot(Vector3 with)
         {
-            // Write your code here...
-            return 0;
+            return this.x * with.x + this.y * with.y + this.z * with.z;
         }
 
         /// <summary>
@@ -85,8 +91,11 @@ namespace RayTracer
         /// <returns>Cross product result</returns>
         public Vector3 Cross(Vector3 with)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(
+            this.y * with.z - this.z * with.y, 
+            this.z * with.x - this.x * with.z, 
+            this.x * with.y - this.y * with.x
+            );
         }
 
         /// <summary>
@@ -97,8 +106,7 @@ namespace RayTracer
         /// <returns>Summed vector</returns>
         public static Vector3 operator +(Vector3 a, Vector3 b)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
         }
 
         /// <summary>
@@ -108,8 +116,7 @@ namespace RayTracer
         /// <returns>Negated vector</returns>
         public static Vector3 operator -(Vector3 a)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(-a.x, -a.y, -a.z);
         }
 
         /// <summary>
@@ -120,8 +127,7 @@ namespace RayTracer
         /// <returns>Subtracted vector</returns>
         public static Vector3 operator -(Vector3 a, Vector3 b)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
         /// <summary>
@@ -132,8 +138,7 @@ namespace RayTracer
         /// <returns>Multiplied vector</returns>
         public static Vector3 operator *(Vector3 a, double b)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(a.x * b, a.y * b, a.z * b);
         }
 
         /// <summary>
@@ -144,8 +149,7 @@ namespace RayTracer
         /// <returns>Multiplied vector</returns>
         public static Vector3 operator *(double b, Vector3 a)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            return new Vector3(a.x * b, a.y * b, a.z * b);
         }
 
         /// <summary>
@@ -156,8 +160,11 @@ namespace RayTracer
         /// <returns>Divided vector</returns>
         public static Vector3 operator /(Vector3 a, double b)
         {
-            // Write your code here...
-            return new Vector3(0, 0, 0);
+            if (b == 0) {
+                throw new DivideByZeroException();
+            } else {
+                return new Vector3(a.x / b, a.y / b, a.z / b);
+            }
         }
 
         /// <summary>
