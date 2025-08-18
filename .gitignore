@@ -399,6 +399,9 @@ FodyWeavers.xsd
 # Annoyingly .obj is a shared file extension, not just for 3D models
 !tests/**/*.obj
 
-# ignore COMP30019_Project_1_Specification_2025.md
+# ignore files
 COMP30019_Project_1_Specification_2025.md
-
+2025s2-project-1-ruonannn.sln
+REFERENCES.md
+validate.ps1
+.github copy/workflows/test.yml
