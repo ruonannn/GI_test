@@ -172,29 +172,34 @@ namespace RayTracer
         /// <returns>Color of the pixel</returns>
         private Color TraceRay(Ray ray)
         {
-           RayHit closestHit = null;
-           double closestT = double.MaxValue;
-           Color color = new Color(0, 0, 0);
+            RayHit closestHit = null;
+            double closestT = double.MaxValue;
+            Color color = new Color(0, 0, 0);
 
-           // check intersection with all entities in the scene
-           foreach(SceneEntity entity in this.entities) 
-           {
+            // check intersection with all entities in the scene
+            foreach (SceneEntity entity in this.entities)
+            {
                 RayHit hit = entity.Intersect(ray);
-                if(hit != null)
+                if (hit != null)
                 {
                     // calculate distance from ray origin to hit point
                     double t = (hit.Position - ray.Origin).Length();
 
                     // Keep trace of the closet hit
-                    if(t < closestT)
+                    if (t < closestT)
                     {
                         closestT = t;
                         closestHit = hit;
-                        color = entity.Material.DiffuseColor;
                     }
                 }
-           }
-           return color;
+            }
+
+            if (closestHit != null)
+            {
+                color = closestHit.Material.DiffuseColor;
+            }
+
+            return color;
         }
     }
 }
