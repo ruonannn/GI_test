@@ -32,8 +32,54 @@ namespace RayTracer
         /// <returns>Hit data (or null if no intersection)</returns>
         public RayHit Intersect(Ray ray)
         {
-            // Write your code here...
-            return null;
+            // use the Moller-Trumbore algorithm to check for intersection
+            // reference: https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm
+
+            const double EPSILON = 1e-8;
+
+            Vector3 e1 = v1 - v0;
+            Vector3 e2 = v2 - v0;
+            Vector3 h = ray.Direction.Cross(e2);
+            double a = e1.Dot(h);
+
+            // check if the ray is parallel to the triangle
+            if (a > -EPSILON && a < EPSILON)
+            {
+                // no intersection
+                return null;
+            }
+
+            double f = 1.0 / a;
+            Vector3 s = ray.Origin - v0;
+            double u = f * s.Dot(h);
+            if (u < 0.0 || u > 1.0)
+            {
+                return null;
+            }
+
+            Vector3 q = s.Cross(e1);
+            double v = f * ray.Direction.Dot(q);
+            if (v < 0.0 || u + v > 1.0)
+            {
+                return null;
+            }
+            
+            double t = f * e2.Dot(q);
+            if (t > EPSILON) // check if the intersection point is behind the camera
+            {
+                Vector3 hitPoint = ray.Origin + ray.Direction * t;
+                Vector3 normal = e1.Cross(e2).Normalized();
+                if(normal.Dot(ray.Direction) > 0)
+                {
+                    normal = -normal;
+                }
+                return new RayHit(hitPoint, normal, ray.Direction, material);
+            }
+            else
+            {
+                // the line segments intersect but the rays do not
+                return null;
+            }
         }
 
         /// <summary>

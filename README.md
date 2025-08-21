@@ -26,8 +26,8 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 - [x] Stage 1.1 - Familiarise yourself with the template
 - [x] Stage 1.2 - Implement vector mathematics
 - [x] Stage 1.3 - Fire a ray for each pixel
-- [ ] Stage 1.4 - Calculate ray-entity intersections
-- [ ] Stage 1.5 - Output primitives as solid colours
+- [x] Stage 1.4 - Calculate ray-entity intersections
+- [x] Stage 1.5 - Output primitives as solid colours
 
 ##### Stage 2
 
@@ -107,3 +107,5 @@ GitHub Actions: https://docs.github.com/en/actions/using-workflows/workflow-synt
 .NET Testing: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
 ImageMagick: https://imagemagick.org/script/compare.php
+
+Moller-Trumbore algorithm: https://en.wikipedia.org/wiki Möller–Trumbore_intersection_algorithm

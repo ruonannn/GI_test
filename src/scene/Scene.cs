@@ -104,7 +104,7 @@ namespace RayTracer
             //     }
             // }
 
-            // Stage 1.3  Fire a ray for each pixel
+            // Stage 1.5 - Ray tracing with object intersection
             int width = outputImage.Width, height = outputImage.Height;
 
             // Build camera parameters
@@ -117,11 +117,9 @@ namespace RayTracer
                     // Make a primary ray for the current pixel
                     var ray = MakePrimaryRay(x, y, width, height, cam);
 
-                    // Map the ray direction to a color
-                    double r = 0.5 * (ray.Direction.X + 1.0);
-                    double g = 0.5 * (ray.Direction.Y + 1.0);
-                    double b = 0.5 * (ray.Direction.Z + 1.0);
-                    outputImage.SetPixel(x, y, new Color(r, g, b));
+                    // Find the closest intersection
+                    Color pixelColor = TraceRay(ray);
+                    outputImage.SetPixel(x, y, pixelColor);
                 }
             }
         }
@@ -167,5 +165,36 @@ namespace RayTracer
             return new Ray(origin, direction);
         }
 
+        /// <summary>
+        /// Trace a ray through the scene
+        /// </summary>
+        /// <param name="ray">Ray to trace</param>
+        /// <returns>Color of the pixel</returns>
+        private Color TraceRay(Ray ray)
+        {
+           RayHit closestHit = null;
+           double closestT = double.MaxValue;
+           Color color = new Color(0, 0, 0);
+
+           // check intersection with all entities in the scene
+           foreach(SceneEntity entity in this.entities) 
+           {
+                RayHit hit = entity.Intersect(ray);
+                if(hit != null)
+                {
+                    // calculate distance from ray origin to hit point
+                    double t = (hit.Position - ray.Origin).Length();
+
+                    // Keep trace of the closet hit
+                    if(t < closestT)
+                    {
+                        closestT = t;
+                        closestHit = hit;
+                        color = entity.Material.DiffuseColor;
+                    }
+                }
+           }
+           return color;
+        }
     }
 }
