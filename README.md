@@ -31,7 +31,7 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 
 ##### Stage 2
 
-- [ ] Stage 2.1 - Illumination
+- [x] Stage 2.1 - Illumination
 - [ ] Stage 2.2 - Shadow rays
 - [ ] Stage 2.3 - Reflection rays
 - [ ] Stage 2.4 - Refraction rays
@@ -102,10 +102,15 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 
 *You must list any references you used - add them here!*
 
-GitHub Actions: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+- [https://github.com/RayTracing/raytracing.github.io](https://github.com/RayTracing/raytracing.github.io)
 
-.NET Testing: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+- Moller-Trumbore algorithm: [https://en.wikipedia.org/wiki Möller–Trumbore_intersection_algorithm]()
 
-ImageMagick: https://imagemagick.org/script/compare.php
+- Phong, B. T. (1975). *Illumination for Computer Generated Pictures*. Communications of the ACM, 18(6), 311–317.  
+  [ACM Digital Library](https://dl.acm.org/doi/10.1145/360349.360353)
 
-Moller-Trumbore algorithm: https://en.wikipedia.org/wiki Möller–Trumbore_intersection_algorithm
+- Lambert’s Cosine Law – Wikipedia  
+  [https://en.wikipedia.org/wiki/Lambert%27s_cosine_law](https://en.wikipedia.org/wiki/Lambert%27s_cosine_law)
+
+- LearnOpenGL – Lighting  
+  [https://learnopengl.com/Lighting/Basic-Lighting](https://learnopengl.com/Lighting/Basic-Lighting)

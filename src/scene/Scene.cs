@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace RayTracer
-{   
+{
     /// <summary>
     /// Class to represent a ray traced scene, including the objects,
     /// light sources, and associated rendering logic.
@@ -113,7 +113,7 @@ namespace RayTracer
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
-                {   
+                {
                     // Make a primary ray for the current pixel
                     var ray = MakePrimaryRay(x, y, width, height, cam);
 
@@ -174,7 +174,6 @@ namespace RayTracer
         {
             RayHit closestHit = null;
             double closestT = double.MaxValue;
-            Color color = new Color(0, 0, 0);
 
             // check intersection with all entities in the scene
             foreach (SceneEntity entity in this.entities)
@@ -194,12 +193,56 @@ namespace RayTracer
                 }
             }
 
-            if (closestHit != null)
+            if (closestHit == null)
             {
-                color = closestHit.Material.DiffuseColor;
+                return new Color(0, 0, 0);
             }
 
-            return color;
+            return CalculateLighting(closestHit, ray);
+        }
+        
+        private Color CalculateLighting(RayHit hit, Ray ray)
+        {
+            Material material = hit.Material;
+            Vector3 hitPoint = hit.Position;
+            Vector3 normal = hit.Normal;
+            Vector3 viewDirection = (-ray.Direction).Normalized(); 
+
+            // 1. ambient light
+            Color ambient = material.AmbientColor * this.ambientLightColor;
+
+            // 2. initialize diffuse color and specular color
+            Color diffuse = new Color(0, 0, 0);
+            Color specular = new Color(0, 0, 0);
+
+            // 3. calculate lighting for each light source
+            foreach(PointLight light in this.lights) 
+            {
+                Vector3 lightDirection = (light.Position - hitPoint).Normalized();
+
+                // diffuse reflection calculation
+                double diffuseIntensity = Math.Max(0, normal.Dot(lightDirection));
+
+                Color diffuseContribution = material.DiffuseColor * light.Color * diffuseIntensity;
+                diffuse += diffuseContribution;
+
+                // specular reflection calculation
+                if(diffuseIntensity > 0)
+                {   
+                    // calculate reflection direction: R = 2(N * L)N - L
+                    Vector3 reflectionDirection = (2 * normal.Dot(lightDirection) * normal - lightDirection).Normalized();
+                    double specularIntensity = Math.Max(0, reflectionDirection.Dot(viewDirection));
+                    specularIntensity = Math.Pow(specularIntensity, material.Shininess);
+
+                    Color specularContribution = material.SpecularColor * light.Color * specularIntensity;
+                    specular += specularContribution;
+                }
+
+            }
+
+            // 4. combine all lighting components
+            Color finalColor = ambient + diffuse + specular;
+            return finalColor;
         }
     }
 }
