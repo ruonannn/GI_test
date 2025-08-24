@@ -185,7 +185,7 @@ namespace RayTracer
                     double t = (hit.Position - ray.Origin).Length();
 
                     // Keep trace of the closet hit
-                    if (t < closestT)
+                    if (t > 0 && t < closestT)
                     {
                         closestT = t;
                         closestHit = hit;
