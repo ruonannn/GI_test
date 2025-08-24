@@ -200,7 +200,13 @@ namespace RayTracer
 
             return CalculateLighting(closestHit, ray);
         }
-        
+
+        /// <summary>
+        /// Calculate lighting for a given hit point
+        /// </summary>
+        /// <param name="hit">Hit point</param>
+        /// <param name="ray">Ray</param>
+        /// <returns>Color of the pixel</returns>
         private Color CalculateLighting(RayHit hit, Ray ray)
         {
             Material material = hit.Material;
@@ -215,34 +221,72 @@ namespace RayTracer
             Color diffuse = new Color(0, 0, 0);
             Color specular = new Color(0, 0, 0);
 
-            // 3. calculate lighting for each light source
+            // 3. calculate lighting for each light source (with shadow)
             foreach(PointLight light in this.lights) 
             {
                 Vector3 lightDirection = (light.Position - hitPoint).Normalized();
+                double lightDistance = (light.Position - hitPoint).Length();
 
-                // diffuse reflection calculation
-                double diffuseIntensity = Math.Max(0, normal.Dot(lightDirection));
+                // shadow check
+                bool inShadow = IsInShadow(hitPoint, light.Position, lightDistance, normal);
 
-                Color diffuseContribution = material.DiffuseColor * light.Color * diffuseIntensity;
-                diffuse += diffuseContribution;
+                if(!inShadow)
+                {
+                    // diffuse reflection calculation
+                    double diffuseIntensity = Math.Max(0, normal.Dot(lightDirection));
+                    Color diffuseContribution = material.DiffuseColor * light.Color * diffuseIntensity;
+                    diffuse += diffuseContribution;
 
-                // specular reflection calculation
-                if(diffuseIntensity > 0)
-                {   
-                    // calculate reflection direction: R = 2(N * L)N - L
-                    Vector3 reflectionDirection = (2 * normal.Dot(lightDirection) * normal - lightDirection).Normalized();
-                    double specularIntensity = Math.Max(0, reflectionDirection.Dot(viewDirection));
-                    specularIntensity = Math.Pow(specularIntensity, material.Shininess);
+                    // specular reflection calculation
+                    if(diffuseIntensity > 0)
+                    {   
+                        // calculate reflection direction: R = 2(N * L)N - L
+                        Vector3 reflectionDirection = (2 * normal.Dot(lightDirection) * normal - lightDirection).Normalized();
+                        double specularIntensity = Math.Max(0, reflectionDirection.Dot(viewDirection));
+                        specularIntensity = Math.Pow(specularIntensity, material.Shininess);
 
-                    Color specularContribution = material.SpecularColor * light.Color * specularIntensity;
-                    specular += specularContribution;
+                        Color specularContribution = material.SpecularColor * light.Color * specularIntensity;
+                        specular += specularContribution;
+                    }
                 }
-
             }
 
             // 4. combine all lighting components
             Color finalColor = ambient + diffuse + specular;
             return finalColor;
+        }
+
+        private bool IsInShadow(Vector3 hitPoint, Vector3 lightPosition, double lightDistance, Vector3 normal)
+        {
+            // calculate the direction from the hit point to the light source
+            Vector3 shadowRayDirection = (lightPosition - hitPoint).Normalized();
+
+            // slightly offset the starting point to avoid self-intersection issues.
+            const double EPSILON = 1e-9;
+            Vector3 shadowRayOrigin = hitPoint + normal * EPSILON;
+
+            // if the light source is behind the face, return false
+            if (normal.Dot(shadowRayDirection) <= 0) return false;
+            
+            // create a shadow ray
+            Ray shadowRay = new Ray(shadowRayOrigin, shadowRayDirection);
+
+            // check for intersection with any objects in the scene
+            foreach (SceneEntity entity in this.entities)
+            {
+                RayHit shadowHit = entity.Intersect(shadowRay);
+                if (shadowHit != null)
+                {
+                    double hitDistance = (shadowHit.Position - shadowRayOrigin).Length();
+
+                    if (hitDistance < lightDistance - EPSILON)
+                    {
+                        return true; // in shadow
+                    }
+                }
+
+            }
+            return false; // not in shadow
         }
     }
 }
