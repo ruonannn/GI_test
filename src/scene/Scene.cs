@@ -135,7 +135,7 @@ namespace RayTracer
             double FOVx = Math.PI * FOVxDeg / 180.0;
             double d = 1.0;
             double halfW = Math.Tan(FOVx / 2.0) * d;
-            double aspect = (double)width / height;
+            double aspect = (double)width / (double)height;
             double halfH = halfW / aspect;
             return new CameraParams(d, halfW, halfH);
         }
@@ -152,8 +152,8 @@ namespace RayTracer
         private Ray MakePrimaryRay(int x, int y, int width, int height, CameraParams cam)
         {
             // Convert pixel coordinates to normalized device coordinates [0,1]
-            double u = (x + 0.5) / width;
-            double v = (y + 0.5) / height;
+            double u = (x + 0.5) / (double)width;
+            double v = (y + 0.5) / (double)height;
 
             // Convert NDC to camera space
             double sx = (2.0 * u - 1.0) * cam.halfW;
@@ -185,7 +185,7 @@ namespace RayTracer
                     double t = (hit.Position - ray.Origin).Length();
 
                     // Keep trace of the closet hit
-                    if (t > 0 && t < closestT)
+                    if (t > 1e-9 && t < closestT)
                     {
                         closestT = t;
                         closestHit = hit;

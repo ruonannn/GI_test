@@ -62,21 +62,22 @@ namespace RayTracer
 
             // calculate the closest intersection point
             double t = -1;
-            if(t0 > 0 && t1 > 0)
+            const double EPSILON = 1e-9;    
+            if(t0 > EPSILON && t1 > EPSILON)
             {
                 t = Math.Min(t0, t1);
             }
-            else if(t0 > 0)
+            else if(t0 > EPSILON)
             {
                 t = t0;
             }
-            else if(t1 > 0)
+            else if(t1 > EPSILON)
             {
                 t = t1;
             }
 
             // if the intersection point is behind the camera, return null
-            if(t <= 0)
+            if(t <= EPSILON)
             {
                 return null;
             }
