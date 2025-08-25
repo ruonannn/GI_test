@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 
 namespace RayTracer
 {
@@ -118,7 +119,7 @@ namespace RayTracer
                     var ray = MakePrimaryRay(x, y, width, height, cam);
 
                     // Find the closest intersection
-                    Color pixelColor = TraceRay(ray);
+                    Color pixelColor = TraceRay(ray, 0);
                     outputImage.SetPixel(x, y, pixelColor);
                 }
             }
@@ -165,13 +166,15 @@ namespace RayTracer
             return new Ray(origin, direction);
         }
 
-        /// <summary>
-        /// Trace a ray through the scene
-        /// </summary>
-        /// <param name="ray">Ray to trace</param>
-        /// <returns>Color of the pixel</returns>
-        private Color TraceRay(Ray ray)
+
+        private Color TraceRay(Ray ray, int depth)
         {
+            const int MAX_DEPTH = 5;
+            if (depth >= MAX_DEPTH)
+            {
+                return new Color(0, 0, 0);
+            }
+
             RayHit closestHit = null;
             double closestT = double.MaxValue;
 
@@ -193,12 +196,25 @@ namespace RayTracer
                 }
             }
 
+            // if no hit was found, return black
             if (closestHit == null)
             {
                 return new Color(0, 0, 0);
             }
 
-            return CalculateLighting(closestHit, ray);
+            // Calculate local color
+            Color localColor = CalculateLighting(closestHit, ray);
+
+            // Calculate reflection color
+            Color reflectedColor = new Color(0, 0, 0);
+
+            // Check if the material is reflective
+            if (closestHit.Material.Reflectivity > 0)
+            {
+                reflectedColor = CalculateReflection(closestHit, ray, depth);
+            }
+
+            return localColor + reflectedColor;
         }
 
         /// <summary>
@@ -212,7 +228,7 @@ namespace RayTracer
             Material material = hit.Material;
             Vector3 hitPoint = hit.Position;
             Vector3 normal = hit.Normal;
-            Vector3 viewDirection = (-ray.Direction).Normalized(); 
+            Vector3 viewDirection = (-ray.Direction).Normalized();
 
             // 1. ambient light
             Color ambient = material.AmbientColor * this.ambientLightColor;
@@ -222,7 +238,7 @@ namespace RayTracer
             Color specular = new Color(0, 0, 0);
 
             // 3. calculate lighting for each light source (with shadow)
-            foreach(PointLight light in this.lights) 
+            foreach (PointLight light in this.lights)
             {
                 Vector3 lightDirection = (light.Position - hitPoint).Normalized();
                 double lightDistance = (light.Position - hitPoint).Length();
@@ -230,7 +246,7 @@ namespace RayTracer
                 // shadow check
                 bool inShadow = IsInShadow(hitPoint, light.Position, lightDistance, normal);
 
-                if(!inShadow)
+                if (!inShadow)
                 {
                     // diffuse reflection calculation
                     double diffuseIntensity = Math.Max(0, normal.Dot(lightDirection));
@@ -238,8 +254,8 @@ namespace RayTracer
                     diffuse += diffuseContribution;
 
                     // specular reflection calculation
-                    if(diffuseIntensity > 0)
-                    {   
+                    if (diffuseIntensity > 0)
+                    {
                         // calculate reflection direction: R = 2(N * L)N - L
                         Vector3 reflectionDirection = (2 * normal.Dot(lightDirection) * normal - lightDirection).Normalized();
                         double specularIntensity = Math.Max(0, reflectionDirection.Dot(viewDirection));
@@ -267,7 +283,7 @@ namespace RayTracer
 
             // if the light source is behind the face, return false
             if (normal.Dot(shadowRayDirection) <= 0) return false;
-            
+
             // create a shadow ray
             Ray shadowRay = new Ray(shadowRayOrigin, shadowRayDirection);
 
@@ -287,6 +303,43 @@ namespace RayTracer
 
             }
             return false; // not in shadow
+        }
+
+        private Color CalculateReflection(RayHit hit, Ray incomingRay, int currentDepth)
+        {
+            Vector3 hitPoint = hit.Position;
+            Vector3 normal = hit.Normal;
+            Vector3 incomingDirection = incomingRay.Direction;
+            double reflectivity = hit.Material.Reflectivity;
+
+            if (normal.Dot(incomingDirection) > 0)
+            {
+                normal = -normal; // flip normal if it's facing the wrong way
+            }
+
+            // calculate reflection direction: R = D - 2(D · N)N
+            Vector3 reflectionDirection = incomingDirection - 2.0 * incomingDirection.Dot(normal) * normal;
+            reflectionDirection = reflectionDirection.Normalized();
+
+            // offset the starting point to avoid self-intersection issues.
+            const double EPSILON = 1e-9;
+            Vector3 reflectionOrigin = hitPoint + normal * EPSILON;
+
+            // check if the reflection direction is below the surface
+            if (reflectionDirection.Dot(normal) < 0)
+            {
+                // if the reflection direction is below the surface, return black
+                return new Color(0, 0, 0);
+            }
+
+            // create a reflection ray
+            Ray reflectionRay = new Ray(reflectionOrigin, reflectionDirection);
+
+            // trace the reflection ray
+            Color reflectedColor = TraceRay(reflectionRay, currentDepth + 1);
+
+            // apply the reflectivity
+            return reflectedColor * reflectivity;
         }
     }
 }
