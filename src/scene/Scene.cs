@@ -167,9 +167,9 @@ namespace RayTracer
         }
 
 
-        private Color TraceRay(Ray ray, int depth)
+        private Color TraceRay(Ray ray, int depth = 0)
         {
-            const int MAX_DEPTH = 5;
+            const int MAX_DEPTH = 8;
             if (depth >= MAX_DEPTH)
             {
                 return new Color(0, 0, 0);
@@ -207,14 +207,19 @@ namespace RayTracer
 
             // Calculate reflection color
             Color reflectedColor = new Color(0, 0, 0);
-
-            // Check if the material is reflective
             if (closestHit.Material.Reflectivity > 0)
             {
                 reflectedColor = CalculateReflection(closestHit, ray, depth);
             }
 
-            return localColor + reflectedColor;
+            // 
+            Color refractedColor = new Color(0, 0, 0);
+            if (closestHit.Material.Transmissivity > 0)
+            {
+                refractedColor = CalculateRefraction(closestHit, ray, depth);
+            }
+
+            return localColor + reflectedColor + refractedColor;
         }
 
         /// <summary>
@@ -340,6 +345,98 @@ namespace RayTracer
 
             // apply the reflectivity
             return reflectedColor * reflectivity;
+        }
+
+        private Color CalculateRefraction(RayHit hit, Ray incomingRay, int currentDepth)
+        {
+            Vector3 hitPoint = hit.Position;
+            Vector3 normal = hit.Normal;
+            Vector3 incomingDirection = incomingRay.Direction;
+            double transmissivity = hit.Material.Transmissivity;
+            double materialRefractiveIndex = hit.Material.RefractiveIndex;
+
+            // determine if the ray is entering or exiting the material
+            bool entering = incomingDirection.Dot(normal) < 0;
+
+            double n1, n2; // refractive indices of the incident medium and the refracted medium
+            Vector3 surfaceNormal = normal;
+
+            if (entering)
+            {
+                // entering the material: air to material
+                n1 = 1.0;
+                n2 = materialRefractiveIndex;
+            }
+            else
+            {
+                // exiting the material: material to air
+                n1 = materialRefractiveIndex;
+                n2 = 1.0;
+                surfaceNormal = -normal; // flip normal if exiting
+            }
+
+            // calculate refraction direction using Snell's law
+            Vector3 refractionDirection;
+            bool totalInternalReflection = false;
+
+            if (!CalculateRefractionDirection(incomingDirection, surfaceNormal, n1, n2, out refractionDirection))
+            {
+                // total internal reflection occurs, reverting to reflection
+                totalInternalReflection = true;
+                refractionDirection = CalculateReflectionDirection(incomingDirection, surfaceNormal);
+
+            }
+
+            // create a refraction ray
+            const double EPSILON = 1e-9;
+            Vector3 refractionOrigin;
+
+            if (totalInternalReflection)
+            {
+                // for total internal reflection, offset along the normal
+                refractionOrigin = hitPoint + surfaceNormal * EPSILON;
+            }
+            else
+            {
+                // ordinary refraction, offset along the direction of refraction
+                refractionOrigin = hitPoint - surfaceNormal * EPSILON;
+            }
+
+            Ray refractionRay = new Ray(refractionOrigin, refractionDirection);
+
+            // Recursively track the refracted rays 
+            Color refractedColor = TraceRay(refractionRay, currentDepth + 1);
+
+            // apply the transmissivity
+            return refractedColor * transmissivity;
+        }
+
+        private bool CalculateRefractionDirection(Vector3 incident, Vector3 normal, double n1, double n2, out Vector3 refractedDirection)
+        {
+            refractedDirection = Vector3.Zero;
+
+            double eta = n1 / n2; // refractive index ratio
+            double cosI = -incident.Dot(normal); // cos(incident angle)
+
+            // check for total internal reflection
+            double discriminant = 1.0 - eta * eta * (1.0 - cosI * cosI);
+
+            if (discriminant < 0)
+            {
+                // total internal reflection occurs, can't calculate refraction
+                return false;
+            }
+
+            double cosT = Math.Sqrt(discriminant);
+            refractedDirection = eta * incident + (eta * cosI - cosT) * normal;
+            refractedDirection = refractedDirection.Normalized();
+
+            return true;
+        }
+
+        private Vector3 CalculateReflectionDirection(Vector3 incident, Vector3 normal)
+        {
+            return (incident - 2.0 * incident.Dot(normal) * normal).Normalized();
         }
     }
 }
