@@ -35,7 +35,7 @@ Tip: To tick, place an x between the square brackes [ ], like so: [x]
 - [x] Stage 2.2 - Shadow rays
 - [x] Stage 2.3 - Reflection rays
 - [x] Stage 2.4 - Refraction rays
-- [ ] Stage 2.5 - The Whitted Illumination Model
+- [x] Stage 2.5 - The Whitted Illumination Model
 
 ##### Stage 3
 
