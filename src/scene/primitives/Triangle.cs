@@ -35,7 +35,7 @@ namespace RayTracer
             // use the Moller-Trumbore algorithm to check for intersection
             // reference: https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm
 
-            const double EPSILON = 1e-9;
+            const double EPSILON = 1e-6;
 
             Vector3 e1 = v1 - v0;
             Vector3 e2 = v2 - v0;

@@ -62,7 +62,7 @@ namespace RayTracer
 
             // calculate the closest intersection point
             double t = -1;
-            const double EPSILON = 1e-9;    
+            const double EPSILON = 1e-6;
             if(t0 > EPSILON && t1 > EPSILON)
             {
                 t = Math.Min(t0, t1);

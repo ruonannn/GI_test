@@ -9,7 +9,8 @@ namespace RayTracer
     /// light sources, and associated rendering logic.
     /// </summary>
     public class Scene
-    {
+    {   
+        private const double EPSILON = 1e-6; 
         private SceneOptions options;
         private Camera camera;
         private Color ambientLightColor;
@@ -313,11 +314,10 @@ namespace RayTracer
             Vector3 shadowRayDirection = (lightPosition - hitPoint).Normalized();
 
             // slightly offset the starting point to avoid self-intersection issues.
-            const double EPSILON = 1e-9;
             Vector3 shadowRayOrigin = hitPoint + normal * EPSILON;
 
-            // if the light source is behind the face, return false
-            if (normal.Dot(shadowRayDirection) <= 0) return false;
+            // if the light source is behind the face, return true
+            if (normal.Dot(shadowRayDirection) <= 0) return true;
 
             // create a shadow ray
             Ray shadowRay = new Ray(shadowRayOrigin, shadowRayDirection);
@@ -364,7 +364,6 @@ namespace RayTracer
             reflectionDirection = reflectionDirection.Normalized();
 
             // offset the starting point to avoid self-intersection issues.
-            const double EPSILON = 1e-9;
             Vector3 reflectionOrigin = hitPoint + normal * EPSILON;
 
             // check if the reflection direction is below the surface
@@ -430,8 +429,6 @@ namespace RayTracer
                 refractionDirection = CalculateReflectionDirection(incomingDirection, surfaceNormal);
 
             }
-
-            const double EPSILON = 1e-9;
 
             if (totalInternalReflection)
             {

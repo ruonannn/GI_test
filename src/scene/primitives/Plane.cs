@@ -38,11 +38,10 @@ namespace RayTracer
             // substitute: (O + tD - C) · N = 0
             // solve for t: t = - (O - C) · N / (D · N)            
             
-            const double EPSILON = 1e-9;
             double denominator = ray.Direction.Dot(this.normal);
 
             // check if the ray is parallel to the plane
-            if(Math.Abs(denominator) < EPSILON)
+            if(Math.Abs(denominator) < 1e-8)
             {
                 // no intersection
                 return null;
@@ -52,6 +51,7 @@ namespace RayTracer
             double t = oc.Dot(this.normal) / denominator;
 
             // check if the intersection point is behind the camera
+            const double EPSILON = 1e-6;
             if(t <= EPSILON)
             {
                 // no intersection
