@@ -101,16 +101,61 @@ dotnet run -- -f tests/sample_scene_2.txt -o images/sample_scene_2.png
 ## References
 
 *You must list any references you used - add them here!*
+  
+### Core Ray Tracing and Mathematical Foundations
 
 - [https://github.com/RayTracing/raytracing.github.io](https://github.com/RayTracing/raytracing.github.io)
 
-- Moller-Trumbore algorithm: [https://en.wikipedia.org/wiki Möller–Trumbore_intersection_algorithm]()
+- Shirley, P., & Morley, R. K. (2003). *Realistic Ray Tracing* (2nd ed.). A K Peters.
 
-- Phong, B. T. (1975). *Illumination for Computer Generated Pictures*. Communications of the ACM, 18(6), 311–317.  
-  [ACM Digital Library](https://dl.acm.org/doi/10.1145/360349.360353)
+### Stage 1: Ray-Geometry Intersection Algorithms
 
-- Lambert’s Cosine Law – Wikipedia  
-  [https://en.wikipedia.org/wiki/Lambert%27s_cosine_law](https://en.wikipedia.org/wiki/Lambert%27s_cosine_law)
+- **Ray-Sphere Intersection**: Geometric solution using quadratic formula  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection](https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection)
 
-- LearnOpenGL – Lighting  
+- **Ray-Plane Intersection**: Basic plane equation and ray parametric form  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection](https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection)
+
+- **Möller–Trumbore Ray-Triangle Intersection Algorithm**  
+  Möller, T., & Trumbore, B. (1997). Fast, minimum storage ray-triangle intersection. *Journal of Graphics Tools*, 2(1), 21-28.  
+  [https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm](https://en.wikipedia.org/wiki/Möller–Trumbore_intersection_algorithm)
+
+### Stage 2: Illumination and Shading Models
+
+- Scratchapixel – Phong Model Tutorial  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/phong-shader-BRDF](https://www.scratchapixel.com/lessons/3d-basic-rendering/phong-shader-BRDF)
+
+- Ray Tracing in One Weekend – Reflection and Refraction  
+  [https://raytracing.github.io/books/RayTracingInOneWeekend.html#metal/mirroredlightreflection](https://raytracing.github.io/books/RayTracingInOneWeekend.html#metal/mirroredlightreflection)
+
+- Scratchapixel – Whitted Ray Tracing Implementation  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing/implementing-the-raytracing-algorithm](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing/implementing-the-raytracing-algorithm)
+
+- Ray Tracing Tutorial – Complete Whitted Model Guide  
+  [https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/](https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/)
+
+- Real-Time Rendering – Whitted Ray Tracing Code Examples  
+  [https://github.com/ssloy/tinyraytracer/wiki/Part-1:-understandable-raytracing](https://github.com/ssloy/tinyraytracer/wiki/Part-1:-understandable-raytracing)
+
+- Scratchapixel – Shadow Ray Implementation  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/shading-lights](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/shading-lights)
+
+- Computer Graphics – Reflection Vector Math  
+  [https://math.hws.edu/graphicsbook/c7/s1.html](https://math.hws.edu/graphicsbook/c7/s1.html)
+
+- Scratchapixel – Reflection and Refraction Tutorial  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel)
+
+- OpenGL Tutorial – Lighting Calculations  
+  [https://learnopengl.com/Lighting/Colors](https://learnopengl.com/Lighting/Colors)
+
+- Ray Tracing Tutorial – Whitted Model Implementation Guide  
+  [https://www.kevinbeason.com/smallpt/](https://www.kevinbeason.com/smallpt/)
+
+### General Graphics Programming Resources
+
+- LearnOpenGL – Basic Lighting concepts and implementation  
   [https://learnopengl.com/Lighting/Basic-Lighting](https://learnopengl.com/Lighting/Basic-Lighting)
+
+- Scratchapixel – Ray Tracing fundamentals  
+  [https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-ray-tracing)
